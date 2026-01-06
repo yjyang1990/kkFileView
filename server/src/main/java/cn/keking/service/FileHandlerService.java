@@ -5,10 +5,7 @@ import cn.keking.model.FileAttribute;
 import cn.keking.model.FileType;
 import cn.keking.service.cache.CacheService;
 import cn.keking.service.cache.NotResourceCache;
-import cn.keking.utils.EncodingDetects;
-import cn.keking.utils.KkFileUtils;
-import cn.keking.utils.UrlEncoderUtils;
-import cn.keking.utils.WebUtils;
+import cn.keking.utils.*;
 import cn.keking.web.filter.BaseUrlFilter;
 import com.aspose.cad.*;
 import com.aspose.cad.fileformats.cad.CadDrawTypeMode;
@@ -433,6 +430,11 @@ public class FileHandlerService implements InitializingBean {
             }
         } finally {
             source.dispose();
+        }
+        if(cadPreviewType.equals("svg")){
+            System.out.println(" This is a new line.");
+            System.out.println(outputFilePath);
+            RemoveSvgAdSimple.removeSvgAdFromFile(outputFilePath);
         }
         return "true";
     }

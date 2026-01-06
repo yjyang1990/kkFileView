@@ -46,8 +46,7 @@ public class FtpUtils {
 
             // 获取文件输入流
             String encodedFilePath = new String(
-                    connectionInfo.remoteFilePath.getBytes(connectionInfo.controlEncoding),
-                    StandardCharsets.ISO_8859_1
+                    connectionInfo.remoteFilePath.getBytes(connectionInfo.controlEncoding), StandardCharsets.ISO_8859_1
             );
 
             // 方法1：直接下载文件到本地
@@ -85,8 +84,7 @@ public class FtpUtils {
 
             // 获取文件输入流
             String encodedFilePath = new String(
-                    connectionInfo.remoteFilePath.getBytes(connectionInfo.controlEncoding),
-                    StandardCharsets.ISO_8859_1
+                    connectionInfo.remoteFilePath.getBytes(connectionInfo.controlEncoding), StandardCharsets.ISO_8859_1
             );
 
             // 获取文件输入流

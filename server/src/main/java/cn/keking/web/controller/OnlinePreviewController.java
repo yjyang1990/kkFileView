@@ -11,15 +11,11 @@ import cn.keking.utils.FtpUtils;
 import cn.keking.utils.KkFileUtils;
 import cn.keking.utils.SslUtils;
 import cn.keking.utils.WebUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import fr.opensagres.xdocreport.core.io.IOUtils;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.hc.client5.http.classic.HttpClient;
-import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -156,6 +152,7 @@ public class OnlinePreviewController {
     public void getCorsFile(@RequestParam String urlPath,
                             @RequestParam(required = false) String key,
                             HttpServletResponse response,
+                            @RequestParam(required = false) String encryption,
                             FileAttribute fileAttribute) throws Exception {
 
         // 1. 验证接口是否开启
@@ -170,7 +167,7 @@ public class OnlinePreviewController {
         }
         URL url;
         try {
-            urlPath = WebUtils.decodeUrl(urlPath, "base64");
+            urlPath = WebUtils.decodeUrl(urlPath, encryption);
             url = WebUtils.normalizedURL(urlPath);
         } catch (Exception ex) {
             logger.error(String.format(BASE64_DECODE_ERROR_MSG, urlPath),ex);
