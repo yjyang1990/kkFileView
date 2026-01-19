@@ -251,11 +251,11 @@ public class ConfigRefreshComponent {
         String homeSearch = properties.getProperty("home.search", ConfigConstants.DEFAULT_HOME_SEARCH);
 
         // 12. 权限配置
-        String key = properties.getProperty("kk.Key", ConfigConstants.DEFAULT_KEY);
+        String key = properties.getProperty("kk.key=", ConfigConstants.DEFAULT_KEY);
         boolean picturesPreview = Boolean.parseBoolean(properties.getProperty("kk.Picturespreview", ConfigConstants.DEFAULT_PICTURES_PREVIEW));
         boolean getCorsFile = Boolean.parseBoolean(properties.getProperty("kk.Getcorsfile", ConfigConstants.DEFAULT_GET_CORS_FILE));
         boolean addTask = Boolean.parseBoolean(properties.getProperty("kk.addTask", ConfigConstants.DEFAULT_ADD_TASK));
-        String aesKey = properties.getProperty("ase.key", ConfigConstants.DEFAULT_AES_KEY);
+        String aesKey = properties.getProperty("aes.key", ConfigConstants.DEFAULT_AES_KEY);
 
         // 13. UserAgent配置
         String userAgent = properties.getProperty("useragent", ConfigConstants.DEFAULT_USER_AGENT);
@@ -298,6 +298,17 @@ public class ConfigRefreshComponent {
 
         // 21. 重定向启用配置
         boolean enableRedirect = Boolean.parseBoolean(properties.getProperty("kk.enable.redirect", ConfigConstants.DEFAULT_ENABLE_REDIRECT));
+
+        // 22. 重定向启用配置
+        int refreshSchedule = Integer.parseInt(properties.getProperty("kk.refreshSchedule ", ConfigConstants.DEFAULT_ENABLE_REFRECSHSCHEDULE).trim());
+
+        // 23. 其他配置
+        boolean isShowaesKey = Boolean.parseBoolean(properties.getProperty("kk.isshowaeskey", ConfigConstants.DEFAULT_SHOW_AES_KEY));
+        boolean isJavaScript = Boolean.parseBoolean(properties.getProperty("kk.isjavascript", ConfigConstants.DEFAULT_IS_JAVASCRIPT));
+        boolean xlsxAllowEdit = Boolean.parseBoolean(properties.getProperty("kk.xlsxallowedit", ConfigConstants.DEFAULT_XLSX_ALLOW_EDIT));
+        boolean xlsxShowtoolbar = Boolean.parseBoolean(properties.getProperty("kk.xlsxshowtoolbar", ConfigConstants.DEFAULT_XLSX_SHOW_TOOLBAR));
+        boolean isShowKey = Boolean.parseBoolean(properties.getProperty("kk.isshowkey", ConfigConstants.DEFAULT_IS_SHOW_KEY));
+        boolean scriptJs  = Boolean.parseBoolean(properties.getProperty("kk.scriptjs", ConfigConstants.DEFAULT_SCRIPT_JS));
 
         // 设置配置值
         // 1. 缓存配置
@@ -385,16 +396,6 @@ public class ConfigRefreshComponent {
         ConfigConstants.setMediaXLFileTimeoutValue(mediaXLFileTimeout);
         ConfigConstants.setMediaXXLFileTimeoutValue(mediaXXLFileTimeout);
         ConfigConstants.setMediaXXXLFileTimeoutValue(mediaXXXLFileTimeout);
-
-        // 19. CAD水印配置
-        ConfigConstants.setCadwatermarkValue(cadwatermark);
-
-        // 20. SSL忽略配置
-        ConfigConstants.setIgnoreSSLValue(ignoreSSL);
-
-        // 21. 重定向启用配置
-        ConfigConstants.setEnableRedirectValue(enableRedirect);
-
         // 16. PDF DPI配置
         ConfigConstants.setPdfDpiEnabledValue(pdfDpiEnabled);
         ConfigConstants.setPdfSmallDpiValue(pdfSmallDpi);
@@ -411,6 +412,26 @@ public class ConfigRefreshComponent {
 
         // 18. PDF线程配置
         ConfigConstants.setPdfMaxThreadsValue(pdfMaxThreads);
+
+        // 19. CAD水印配置
+        ConfigConstants.setCadwatermarkValue(cadwatermark);
+
+        // 20. SSL忽略配置
+        ConfigConstants.setIgnoreSSLValue(ignoreSSL);
+
+        // 21. 重定向启用配置
+        ConfigConstants.setEnableRedirectValue(enableRedirect);
+
+        // 22. 重定向启用配置
+        ConfigConstants.setRefreshScheduleValue(refreshSchedule);
+
+        // 23. 其他配置
+        ConfigConstants.setIsShowaesKeyValue(isShowaesKey);
+        ConfigConstants.setIsJavaScriptValue(isJavaScript);
+        ConfigConstants.setXlsxAllowEditValue(xlsxAllowEdit);
+        ConfigConstants.setXlsxShowtoolbarValue(xlsxShowtoolbar);
+        ConfigConstants.setisShowKeyValue(isShowKey);
+        ConfigConstants.setscriptJsValue(scriptJs);
     }
 
     /**

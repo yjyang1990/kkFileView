@@ -55,7 +55,6 @@ public class CadFilePreviewImpl implements FilePreview {
         // 预览Type，参数传了就取参数的，没传取系统默认
         String officePreviewType = fileAttribute.getOfficePreviewType() == null ?
                 ConfigConstants.getOfficePreviewType() : fileAttribute.getOfficePreviewType();
-        String baseUrl = BaseUrlFilter.getBaseUrl();
         boolean forceUpdatedCache = fileAttribute.forceUpdatedCache();
         String fileName = fileAttribute.getName();
         String cadPreviewType = ConfigConstants.getCadPreviewType();
@@ -63,20 +62,9 @@ public class CadFilePreviewImpl implements FilePreview {
         String outFilePath = fileAttribute.getOutFilePath();
 
         // 查询转换状态
-        FileConvertStatusManager.ConvertStatus status = FileConvertStatusManager.getConvertStatus(fileName);
-        if (status != null) {
-            if (status.getStatus() == FileConvertStatusManager.Status.CONVERTING) {
-                // 正在转换中，返回等待页面
-                model.addAttribute("fileName", fileName);
-                model.addAttribute("message", status.getRealTimeMessage());
-                return WAITING_FILE_PREVIEW_PAGE;
-            } else if (status.getStatus() == FileConvertStatusManager.Status.TIMEOUT) {
-                // 超时状态，不允许重新转换
-                return otherFilePreview.notSupportedFile(model, fileAttribute, "文件转换已超时，无法继续转换");
-            } else if (status.getStatus() == FileConvertStatusManager.Status.FAILED) {
-                // 失败状态，不允许重新转换
-                return otherFilePreview.notSupportedFile(model, fileAttribute, "文件转换失败，无法继续转换");
-            }
+        String statusResult = officefilepreviewimpl.checkAndHandleConvertStatus(model, fileName, cacheName, fileAttribute);
+        if (statusResult != null) {
+            return statusResult;
         }
 
         // 判断之前是否已转换过，如果转换过，直接返回，否则执行转换
@@ -117,6 +105,7 @@ public class CadFilePreviewImpl implements FilePreview {
         CompletableFuture<Boolean> conversionFuture = cadtopdfservice.cadToPdfAsync(
                 filePath,
                 outFilePath,
+                cacheName,
                 ConfigConstants.getCadPreviewType(),
                 fileAttribute
         );
@@ -166,11 +155,8 @@ public class CadFilePreviewImpl implements FilePreview {
 
         if (baseUrl != null && (OFFICE_PREVIEW_TYPE_IMAGE.equals(officePreviewType) ||
                 OFFICE_PREVIEW_TYPE_ALL_IMAGES.equals(officePreviewType))) {
-            return officefilepreviewimpl.getPreviewType(model, fileAttribute, officePreviewType,
-                    cacheName, outFilePath, fileHandlerService,
-                    OFFICE_PREVIEW_TYPE_IMAGE, otherFilePreview);
+            return officefilepreviewimpl.getPreviewType(model, fileAttribute, officePreviewType, cacheName, outFilePath);
         }
-
         model.addAttribute("pdfUrl", cacheName);
         return PDF_FILE_PREVIEW_PAGE;
     }

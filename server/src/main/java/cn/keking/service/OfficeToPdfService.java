@@ -79,29 +79,20 @@ public class OfficeToPdfService {
             // 格式化显示耗时（支持不同时间单位）
             String durationFormatted;
             if (duration.toMinutes() > 0) {
-                durationFormatted = String.format("%d分%d秒",
-                        duration.toMinutes(),
-                        duration.toSecondsPart());
+                durationFormatted = String.format("%d分%d秒", duration.toMinutes(), duration.toSecondsPart());
             } else if (duration.toSeconds() > 0) {
-                durationFormatted = String.format("%d.%03d秒",
-                        duration.toSeconds(),
-                        duration.toMillisPart());
+                durationFormatted = String.format("%d.%03d秒",duration.toSeconds(), duration.toMillisPart());
             } else {
                 durationFormatted = String.format("%d毫秒", duration.toMillis());
             }
 
             logger.info("文件转换成功：{} -> {}，耗时：{}",
-                    inputFile.getName(),
-                    outputFile.getName(),
-                    durationFormatted);
+                    inputFile.getName(),outputFile.getName(),  durationFormatted);
 
         } catch (OfficeException e) {
             Instant endTime = Instant.now();
             Duration duration = Duration.between(startTime, endTime);
-            logger.error("文件转换失败：{}，已耗时：{}毫秒，错误信息：{}",
-                    inputFile.getName(),
-                    duration.toMillis(),
-                    e.getMessage());
+            logger.error("文件转换失败：{}，已耗时：{}毫秒，错误信息：{}", inputFile.getName(), duration.toMillis(), e.getMessage());
             throw e;
         }
     }

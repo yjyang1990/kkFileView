@@ -77,6 +77,9 @@ public class OnlinePreviewController {
     public String onlinePreview(@RequestParam String url,
                                 @RequestParam(required = false) String key,
                                 @RequestParam(required = false) String encryption,
+                                @RequestParam(defaultValue = "false") String highlightall,
+                                @RequestParam(defaultValue = "0") String page,
+                                @RequestParam(defaultValue = "false") String kkagent,
                                 Model model,
                                 HttpServletRequest req) {
         // 验证访问权限
@@ -90,7 +93,12 @@ public class OnlinePreviewController {
             String errorMsg = String.format(BASE64_DECODE_ERROR_MSG, "url");
             return otherFilePreview.notSupportedFile(model, errorMsg);
         }
-        FileAttribute fileAttribute = fileHandlerService.getFileAttribute(fileUrl, req);  //这里不在进行URL 处理了
+        FileAttribute fileAttribute = fileHandlerService.getFileAttribute(fileUrl, req);
+
+        highlightall= KkFileUtils.htmlEscape(highlightall);
+        model.addAttribute("highlightall", highlightall);
+        model.addAttribute("page", page);
+        model.addAttribute("kkagent", kkagent);
         model.addAttribute("file", fileAttribute);
         FilePreview filePreview = previewFactory.get(fileAttribute);
         logger.info("预览文件url：{}，previewType：{}", fileUrl, fileAttribute.getType());
@@ -151,8 +159,8 @@ public class OnlinePreviewController {
     public void getCorsFile(@RequestParam String urlPath,
                             @RequestParam(required = false) String key,
                             HttpServletResponse response,
-                            @RequestParam(required = false) String encryption,
-                            FileAttribute fileAttribute) throws Exception {
+                            HttpServletRequest req,
+                            @RequestParam(required = false) String encryption) throws Exception {
 
         // 1. 验证接口是否开启
         if (!ConfigConstants.getGetCorsFile()) {
@@ -177,6 +185,7 @@ public class OnlinePreviewController {
             logger.info("读取跨域文件异常，可能存在非法访问，urlPath：{}", urlPath);
             return;
         }
+        FileAttribute fileAttribute = fileHandlerService.getFileAttribute(urlPath, req);
         InputStream inputStream = null;
         logger.info("读取跨域pdf文件url：{}", urlPath);
         if (!isFtpUrl(url)) {
@@ -188,7 +197,6 @@ public class OnlinePreviewController {
 
             RestTemplate restTemplate = new RestTemplate();
             restTemplate.setRequestFactory(factory);
-
             RequestCallback requestCallback = request -> {
                 request.getHeaders().setAccept(Arrays.asList(MediaType.APPLICATION_OCTET_STREAM, MediaType.ALL));
                 WebUtils.applyBasicAuthHeaders(request.getHeaders(), fileAttribute);

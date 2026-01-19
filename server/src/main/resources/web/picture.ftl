@@ -19,25 +19,25 @@
 
 <ul id="image">
     <#list imgUrls as img>
-        <#if img?contains("http://") || img?contains("https://")>
-            <#assign img="${img}">
-        <#else>
-            <#assign img="${baseUrl}${img}">
-        </#if>
-        <li><img id="${img}"  url="${img}" src="${img}" style="display: none"></li>
+	<#if img?contains("http://") || img?contains("https://")|| img?contains("ftp://")|| img?contains("file://")>
+    <#assign finalUrl="${img}">
+     <#else>
+    <#assign finalUrl="${baseUrl}${img}">
+     </#if>
+      <li><div src="${finalUrl}" style="display: none"></li>
     </#list>
 </ul>
-
 <script>
-    var viewer = new Viewer(document.getElementById('image'), {
+ document.addEventListener('DOMContentLoaded', function () {
+        var viewer = new Viewer(document.getElementById('image'), {
         url: 'src',
         navbar: false,
         button: false,
         backdrop: false,
-        loop : true
-    });
-    document.getElementById("${currentUrl}").click();
-
+        loop : true,
+            });
+            viewer.view(0); // 0 是图片的索引，如果你想点击第一张图片，索引为 0
+        });
     /*初始化水印*/
     window.onload = function() {
         initWaterMark();

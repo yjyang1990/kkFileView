@@ -2,6 +2,7 @@ package cn.keking.service;
 
 import cn.keking.config.ConfigConstants;
 import cn.keking.model.FileAttribute;
+import cn.keking.utils.FileConvertStatusManager;
 import org.bytedeco.ffmpeg.global.avcodec;
 import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.FFmpegFrameRecorder;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -89,15 +89,17 @@ public class Mediatomp4Service {
      * 异步转换方法（带任务ID和超时控制）
      */
     public static CompletableFuture<Boolean> convertToMp4Async(
-            String filePath, String outFilePath, FileAttribute fileAttribute) {
+            String filePath, String outFilePath,String cacheName, FileAttribute fileAttribute) {
 
         String taskId = generateTaskId(filePath);
+        // 立即创建初始状态，防止重复执行
+        FileConvertStatusManager.startConvert(cacheName);
         CompletableFuture<Boolean> resultFuture = new CompletableFuture<>();
 
         // 创建转换线程
         Thread conversionThread = new Thread(() -> {
             try {
-                boolean result = convertToMp4WithCancellation(filePath, outFilePath,
+                boolean result = convertToMp4WithCancellation(filePath, outFilePath,cacheName,
                         fileAttribute, taskId, resultFuture);
                 resultFuture.complete(result);
             } catch (Exception e) {
@@ -120,10 +122,11 @@ public class Mediatomp4Service {
             // 设置超时监控
             File inputFile = new File(filePath);
             long fileSizeMB = inputFile.length() / (1024 * 1024);
-            scheduleTimeoutMonitor(taskId, calculateTimeout(fileSizeMB));
+            scheduleTimeoutMonitor(taskId, calculateTimeout(fileSizeMB),cacheName);
             return resultFuture;
 
         } catch (Exception e) {
+            FileConvertStatusManager.markError(cacheName, "转换过程异常: " + e.getMessage());
             resultFuture.completeExceptionally(e);
             cleanupFailedFile(outFilePath);
             return resultFuture;
@@ -134,25 +137,18 @@ public class Mediatomp4Service {
      * 带取消支持的同步转换方法（核心改进）
      */
     private static boolean convertToMp4WithCancellation(
-            String filePath, String outFilePath, FileAttribute fileAttribute,
+            String filePath, String outFilePath,String cacheName, FileAttribute fileAttribute,
             String taskId, CompletableFuture<Boolean> resultFuture) throws Exception {
-
         FFmpegFrameGrabber frameGrabber = null;
         FFmpegFrameRecorder recorder = null;
         ConversionContext context = null;
-
         try {
             File sourceFile = new File(filePath);
             if (!sourceFile.exists()) {
                 throw new FileNotFoundException("源文件不存在: " + filePath);
             }
-
             File desFile = new File(outFilePath);
-            if (desFile.exists() && !fileAttribute.forceUpdatedCache()) {
-                logger.info("目标文件已存在，跳过转换: {}", outFilePath);
-                return true;
-            }
-
+            FileConvertStatusManager.updateProgress(cacheName, "正在启动转换任务", 10);
             // 初始化抓取器
             frameGrabber = new FFmpegFrameGrabber(sourceFile);
             frameGrabber.setOption("stimeout", "10000000"); // 10秒超时
@@ -168,7 +164,7 @@ public class Mediatomp4Service {
 
             configureRecorder(recorder, frameGrabber);
             recorder.start();
-
+            FileConvertStatusManager.updateProgress(cacheName, "正在启动转换任务", 40);
             // 创建任务上下文
             context = new ConversionContext(frameGrabber, recorder);
 
@@ -180,7 +176,7 @@ public class Mediatomp4Service {
             logger.info("开始转换任务 {}: {} -> {}", taskId, filePath, outFilePath);
 
             // 核心：使用非阻塞方式读取帧
-            return processFramesWithTimeout(frameGrabber, recorder, context, taskId);
+            return processFramesWithTimeout(frameGrabber, recorder, context, taskId,cacheName);
 
         } catch (Exception e) {
             // 检查是否是取消操作
@@ -208,7 +204,7 @@ public class Mediatomp4Service {
      */
     private static boolean processFramesWithTimeout(
             FFmpegFrameGrabber grabber, FFmpegFrameRecorder recorder,
-            ConversionContext context, String taskId) throws Exception {
+            ConversionContext context, String taskId, String cacheName) throws Exception {
 
         long frameCount = 0;
         long startTime = System.currentTimeMillis();
@@ -227,10 +223,9 @@ public class Mediatomp4Service {
                     logger.warn("任务 {} 帧读取超时，可能文件损坏", taskId);
                     throw new TimeoutException("帧读取超时");
                 }
-
                 // 尝试抓取帧
                 frame = grabber.grabFrame();
-
+                FileConvertStatusManager.updateProgress(cacheName, "正在启动转换任务", 60);
                 if (frame == null) {
                     consecutiveNullFrames++;
 
@@ -260,7 +255,7 @@ public class Mediatomp4Service {
                     }
                     continue;
                 }
-
+                FileConvertStatusManager.updateProgress(cacheName, "正在启动转换任务", 80);
                 // 成功获取到帧，重置计数器
                 consecutiveNullFrames = 0;
                 lastFrameTime = System.currentTimeMillis();
@@ -295,12 +290,12 @@ public class Mediatomp4Service {
             // 完成录制
             recorder.stop();
             recorder.close();
-
+            FileConvertStatusManager.updateProgress(cacheName, "正在启动转换任务", 100);
             long totalTime = System.currentTimeMillis() - startTime;
             double fps = totalTime > 0 ? (frameCount * 1000.0) / totalTime : 0;
             logger.info("任务 {} 转换完成: {} 帧, 耗时: {}ms, 平均速度: {} fps",
                     taskId, frameCount, totalTime, String.format("%.2f", fps));
-
+            FileConvertStatusManager.convertSuccess(cacheName);
             return true;
 
         } catch (Exception e) {
@@ -404,11 +399,12 @@ public class Mediatomp4Service {
     /**
      * 配置超时监控
      */
-    private static void scheduleTimeoutMonitor(String taskId, long timeoutSeconds) {
+    private static void scheduleTimeoutMonitor(String taskId, long timeoutSeconds,String cacheName) {
         ScheduledFuture<?> timeoutFuture = monitorExecutor.schedule(() -> {
             ConversionTask task = activeTasks.get(taskId);
             if (task != null && !task.context.completed) {
                 logger.warn("任务 {} 超时 ({}秒)，开始强制终止", taskId, timeoutSeconds);
+                FileConvertStatusManager.markTimeout(cacheName);
                 cancelConversion(taskId);
                 task.future.completeExceptionally(
                         new TimeoutException("转换超时: " + timeoutSeconds + "秒")
@@ -471,16 +467,6 @@ public class Mediatomp4Service {
             throw new FileNotFoundException("源文件不存在: " + filePath);
         }
 
-        File desFile = new File(outFilePath);
-        if (desFile.exists()) {
-            if (fileAttribute.forceUpdatedCache()) {
-                if (!desFile.delete()) {
-                    throw new IOException("无法删除已存在的文件: " + outFilePath);
-                }
-            } else {
-                throw new IllegalStateException("目标文件已存在，跳过转换");
-            }
-        }
     }
 
     /**

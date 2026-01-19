@@ -1,0 +1,157 @@
+/* 分页容器样式 */
+.black {
+  
+    margin: 10px 0;
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+/* 分页按钮基础样式 */
+.black button {
+    margin: 0 5px;
+    padding: 6px 16px;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    background: #007bff;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* 分页按钮悬停效果 */
+.black button:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 分页按钮激活状态 */
+.black button:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+/* 分页信息文字 */
+.black span {
+    margin: 0 10px;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+/* 输入框样式 */
+.black input[type="number"] {
+    width: 70px;
+    padding: 5px 8px;
+    margin: 0 5px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+    text-align: center;
+}
+
+.black input[type="number"]:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* 内容区域样式 */
+.divContent {
+    padding: 20px;
+    margin: 15px 0;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    line-height: 1.6;
+    color: #212529;
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-x: auto;
+}
+
+/* 代码块样式 */
+.divContent pre {
+    margin: 15px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-left: 4px solid #007bff;
+    overflow-x: auto;
+}
+
+.divContent code {
+    font-family: "Consolas", "Monaco", "Courier New", monospace;
+    font-size: 14px;
+    color: #e83e8c;
+}
+
+/* 行号样式 */
+.divContent .line-number {
+    display: inline-block;
+    width: 30px;
+    margin-right: 10px;
+    color: #6c757d;
+    text-align: right;
+    user-select: none;
+}
+
+/* 高亮搜索关键词 */
+.highlight {
+    background: #fff3cd;
+    padding: 1px 3px;
+    border-radius: 2px;
+    color: #856404;
+    font-weight: bold;
+}
+
+/* 面板标题样式 */
+.panel-heading {
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 6px 6px 0 0;
+}
+
+.panel-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.panel-title a {
+    color: white;
+    text-decoration: none;
+}
+
+.panel-title a:hover {
+    text-decoration: underline;
+    opacity: 0.9;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .black {
+        padding: 8px 0;
+    }
+    
+    .black button {
+        padding: 5px 12px;
+        margin: 2px;
+        font-size: 13px;
+    }
+    
+    .black input[type="number"] {
+        width: 60px;
+        margin: 2px;
+    }
+    
+    .divContent {
+        padding: 15px;
+        font-size: 14px;
+    }
+}

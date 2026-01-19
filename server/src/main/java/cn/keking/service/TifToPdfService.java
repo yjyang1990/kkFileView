@@ -1,6 +1,7 @@
 package cn.keking.service;
 
 import cn.keking.config.ConfigConstants;
+import cn.keking.utils.FileConvertStatusManager;
 import cn.keking.utils.WebUtils;
 import cn.keking.web.filter.BaseUrlFilter;
 import jakarta.annotation.PostConstruct;
@@ -60,14 +61,13 @@ public class TifToPdfService {
     /**
      * TIF转JPG - 虚拟线程版本
      */
-    public List<String> convertTif2Jpg(String strInputFile, String strOutputFile,
+    public List<String> convertTif2Jpg(String strInputFile, String strOutputFile,String fileName,
+                                       String cacheName,
                                        boolean forceUpdatedCache) throws Exception {
-        String fileName = new File(strInputFile).getName();
         Instant startTime = Instant.now();
-
         try {
             List<String> result = performTifToJpgConversionVirtual(
-                    strInputFile, strOutputFile, forceUpdatedCache
+                    strInputFile, strOutputFile, forceUpdatedCache,fileName,cacheName
             );
 
             Duration elapsedTime = Duration.between(startTime, Instant.now());
@@ -90,7 +90,8 @@ public class TifToPdfService {
      * 虚拟线程执行TIF转JPG转换
      */
     private List<String> performTifToJpgConversionVirtual(String strInputFile, String strOutputFile,
-                                                          boolean forceUpdatedCache) throws Exception {
+                                                          boolean forceUpdatedCache,String fileName,
+                                                          String cacheName) throws Exception {
         Instant totalStart = Instant.now();
 
         String baseUrl = BaseUrlFilter.getBaseUrl();
@@ -105,7 +106,7 @@ public class TifToPdfService {
         if (!outputDir.exists() && !outputDir.mkdirs()) {
             throw new IOException("创建目录失败: " + outputDirPath);
         }
-
+        FileConvertStatusManager.updateProgress(cacheName, "正在转换TIF为PDF", 30);
         // 加载所有图片
         List<BufferedImage> images;
         try {
@@ -121,12 +122,12 @@ public class TifToPdfService {
             logger.warn("TIF文件没有可转换的页面: {}", strInputFile);
             return Collections.emptyList();
         }
-
+        FileConvertStatusManager.updateProgress(cacheName, "正在转换TIF为PDF", 50);
         List<String> result = convertPagesVirtualThreads(images, outputDirPath, baseUrl, forceUpdatedCache);
 
         Duration totalTime = Duration.between(totalStart, Instant.now());
         logger.info("TIF转换PNG完成，总页数: {}, 总耗时: {}ms", pageCount, totalTime.toMillis());
-
+        FileConvertStatusManager.updateProgress(cacheName, "正在转换TIF为PDF", 100);
         return result;
     }
 
@@ -211,9 +212,9 @@ public class TifToPdfService {
     /**
      * TIF转PDF - 虚拟线程版本
      */
-    public void convertTif2Pdf(String strJpgFile, String strPdfFile,
+    public void convertTif2Pdf(String strJpgFile, String strPdfFile,String fileName,
+                               String cacheName,
                                boolean forceUpdatedCache) throws Exception {
-        String fileName = new File(strJpgFile).getName();
         Instant startTime = Instant.now();
 
         try {
@@ -224,8 +225,8 @@ public class TifToPdfService {
                 logger.info("PDF文件已存在，跳过转换: {}", strPdfFile);
                 return;
             }
-
-            boolean result = performTifToPdfConversionVirtual(strJpgFile, strPdfFile);
+            FileConvertStatusManager.updateProgress(cacheName, "正在转换TIF为PDF", 30);
+            boolean result = performTifToPdfConversionVirtual(strJpgFile, strPdfFile,fileName,cacheName);
             Duration elapsedTime = Duration.between(startTime, Instant.now());
 
             logger.info("TIF转PDF{} - 文件: {}, 耗时: {}ms",
@@ -244,7 +245,7 @@ public class TifToPdfService {
     /**
      * 虚拟线程执行TIF转PDF转换（保持顺序）
      */
-    private boolean performTifToPdfConversionVirtual(String strJpgFile, String strPdfFile) throws Exception {
+    private boolean performTifToPdfConversionVirtual(String strJpgFile, String strPdfFile,String fileName,String cacheName) throws Exception {
         Instant totalStart = Instant.now();
 
         File tiffFile = new File(strJpgFile);
@@ -257,14 +258,14 @@ public class TifToPdfService {
                 logger.warn("TIFF文件没有可转换的页面: {}", strJpgFile);
                 return false;
             }
-
+            FileConvertStatusManager.updateProgress(cacheName, "正在转换TIF为PDF", 30);
             int pageCount = images.size();
             AtomicInteger processedCount = new AtomicInteger(0);
             AtomicInteger errorCount = new AtomicInteger(0);
 
             // 创建页面处理结果的列表
             List<CompletableFuture<ProcessedPageResult>> futures = new ArrayList<>(pageCount);
-
+            FileConvertStatusManager.updateProgress(cacheName, "正在转换TIF为PDF", 50);
             // 为每个页面创建处理任务
             for (int pageIndex = 0; pageIndex < pageCount; pageIndex++) {
                 final int currentPageIndex = pageIndex;
@@ -286,7 +287,7 @@ public class TifToPdfService {
 
                 futures.add(future);
             }
-
+            FileConvertStatusManager.updateProgress(cacheName, "正在转换TIF为PDF", 70);
             // 等待所有任务完成
             CompletableFuture<Void> allFutures = CompletableFuture.allOf(
                     futures.toArray(new CompletableFuture[0])
@@ -332,7 +333,7 @@ public class TifToPdfService {
                     errorCount.incrementAndGet();
                 }
             }
-
+            FileConvertStatusManager.updateProgress(cacheName, "正在转换TIF为PDF", 100);
             // 保存PDF
             document.save(strPdfFile);
 

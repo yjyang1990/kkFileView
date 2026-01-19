@@ -17,6 +17,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 public class ConfigConstants {
     public static final String BEAN_NAME = "configConstants";
 
+
     static {
         // PDFBox兼容低版本JDK
         System.setProperty("sun.java2d.cmm", "sun.java2d.cmm.kcms.KcmsServiceProvider");
@@ -90,7 +91,7 @@ public class ConfigConstants {
     public static final String DEFAULT_PICTURES_PREVIEW = "true";
     public static final String DEFAULT_GET_CORS_FILE = "true";
     public static final String DEFAULT_ADD_TASK = "true";
-    public static final String DEFAULT_AES_KEY = "1234567890123456";
+    public static final String DEFAULT_AES_KEY = "false";
 
     // 12. UserAgent配置常量
     public static final String DEFAULT_USER_AGENT = "false";
@@ -133,6 +134,17 @@ public class ConfigConstants {
 
     // 20. 重定向启用配置常量
     public static final String DEFAULT_ENABLE_REDIRECT = "true";
+
+    // 22. 异步定时
+    public static final String DEFAULT_ENABLE_REFRECSHSCHEDULE = "5";
+
+    // 23. 其他配置常量
+    public static final String DEFAULT_SHOW_AES_KEY = "1234567890123456";
+    public static final String DEFAULT_IS_JAVASCRIPT = "false";
+    public static final String DEFAULT_XLSX_ALLOW_EDIT = "false";
+    public static final String DEFAULT_XLSX_SHOW_TOOLBAR = "false";
+    public static final String DEFAULT_IS_SHOW_KEY= "false";
+    public static final String DEFAULT_SCRIPT_JS ="false" ;
 
     // ==================================================
 // 配置变量定义区（按功能分类，均为静态变量）
@@ -253,6 +265,18 @@ public class ConfigConstants {
 
     // 21. 重定向启用配置
     private static Boolean enableRedirect;
+
+    // 22. 异步定时
+    private static int refreshSchedule;
+
+    // 23. 其他配置变量
+    private static boolean isShowaesKey;
+    private static boolean isJavaScript;
+    private static boolean xlsxAllowEdit;
+    private static boolean xlsxShowtoolbar;
+    private static boolean isShowKey;
+    private static boolean scriptJs;
+
 
 
     // ==================================================
@@ -577,6 +601,36 @@ public class ConfigConstants {
     // 21. 重定向启用配置获取方法
     public static boolean isEnableRedirect() {
         return enableRedirect;
+    }
+
+    // 22. 异步定时刷新时间
+    public static int getTime() {
+        return 0;
+    }
+
+    // 23. 其他配置获取方法
+    public static boolean getisShowaesKey() {
+        return isShowaesKey;
+    }
+
+    public static boolean getisJavaScript() {
+        return isJavaScript;
+    }
+
+    public static boolean getxlsxAllowEdit() {
+        return xlsxAllowEdit;
+    }
+
+    public static boolean getxlsxShowtoolbar() {
+        return xlsxShowtoolbar;
+    }
+
+    public static boolean getisShowKey() {
+        return isShowKey;
+    }
+
+    public static boolean getscriptJs() {
+        return scriptJs;
     }
 
 // ==================================================
@@ -1036,7 +1090,7 @@ public class ConfigConstants {
     }
 
     // 12. 权限配置Setter方法
-    @Value("${kk.Key:}")
+    @Value("${kk.key:false}")
     public void setKey(String key) {
         setKeyValue(key);
     }
@@ -1072,7 +1126,7 @@ public class ConfigConstants {
         ConfigConstants.addTask = addTask;
     }
 
-    @Value("${ase.key:1234567890123456}")
+    @Value("${aes.key:1234567890123456}")
     public void setaesKey(String aesKey) {
         setaesKeyValue(aesKey);
     }
@@ -1304,5 +1358,70 @@ public class ConfigConstants {
 
     public static void setEnableRedirectValue(Boolean enableRedirect) {
         ConfigConstants.enableRedirect = enableRedirect;
+    }
+
+    // 22 异步定时刷新时间
+    @Value("${kk.refreshSchedule:5}")
+    public void setRefreshSchedule(int refreshSchedule) {
+        setRefreshScheduleValue(refreshSchedule);
+    }
+
+    public static void setRefreshScheduleValue(int refreshSchedule) {
+        ConfigConstants.refreshSchedule = refreshSchedule;
+    }
+
+    // 23. 其他配置Setter方法
+    @Value("${kk.isshowaeskey:false}")
+    public void setIsShowaesKey(String isShowaesKey) {
+        setIsShowaesKeyValue(Boolean.parseBoolean(isShowaesKey));
+    }
+
+    public static void setIsShowaesKeyValue(boolean isShowaesKey) {
+        ConfigConstants.isShowaesKey = isShowaesKey;
+    }
+
+    @Value("${kk.isjavascript:false}")
+    public void setIsJavaScript(String isJavaScript) {
+        setIsJavaScriptValue(Boolean.parseBoolean(isJavaScript));
+    }
+
+    public static void setIsJavaScriptValue(boolean isJavaScript) {
+        ConfigConstants.isJavaScript = isJavaScript;
+    }
+
+    @Value("${kk.xlsxallowedit:false}")
+    public void setXlsxAllowEdit(String xlsxAllowEdit) {
+        setXlsxAllowEditValue(Boolean.parseBoolean(xlsxAllowEdit));
+    }
+
+    public static void setXlsxAllowEditValue(boolean xlsxAllowEdit) {
+        ConfigConstants.xlsxAllowEdit = xlsxAllowEdit;
+    }
+
+    @Value("${kk.xlsxshowtoolbar:false}")
+    public void setXlsxShowtoolbar(String xlsxShowtoolbar) {
+        setXlsxShowtoolbarValue(Boolean.parseBoolean(xlsxShowtoolbar));
+    }
+
+    public static void setXlsxShowtoolbarValue(boolean xlsxShowtoolbar) {
+        ConfigConstants.xlsxShowtoolbar = xlsxShowtoolbar;
+    }
+
+    @Value("${kk.isshowkey:false}")
+    public void setisShowKey(String isShowKey) {
+        setisShowKeyValue(Boolean.parseBoolean(isShowKey));
+    }
+
+    public static void setisShowKeyValue(boolean isShowKey) {
+        ConfigConstants.isShowKey = isShowKey;
+    }
+
+    @Value("${kk.scriptjs:false}")
+    public void setscriptJs(String scriptJs) {
+        setscriptJsValue(Boolean.parseBoolean(scriptJs));
+    }
+
+    public static void setscriptJsValue(boolean scriptJs) {
+        ConfigConstants.scriptJs = scriptJs;
     }
 }

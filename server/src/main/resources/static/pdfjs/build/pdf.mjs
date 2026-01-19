@@ -24,7 +24,23 @@
  * pdfjsVersion = 5.4.530
  * pdfjsBuild = 50cc4adac
  */
-/******/ var __webpack_modules__ = ({
+/******/ 
+var queryStringg = document.location.search.substring(1);
+var paramss = parseQueryStringg(queryStringg);
+function parseQueryStringg(query) {
+   const paramss = new Map();
+  for (const [key, value] of new URLSearchParams(query)) {
+    paramss.set(key.toLowerCase(), value);
+  }
+  return paramss;
+}
+var kkSIZE = paramss.get("pdfautofetch");
+if (kkSIZE == "true" ) {
+    kkSIZE = 65536*16;
+} else {
+    kkSIZE = 65536;
+} 
+var __webpack_modules__ = ({
 
 /***/ 34:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
@@ -20714,7 +20730,7 @@ class TextLayer {
 
 
 
-
+const DEFAULT_RANGE_CHUNK_SIZE = kkSIZE;
 const RENDERING_CANCELLED_TIMEOUT = 100;
 function getDocument(src = {}) {
   if (typeof src === "string" || src instanceof URL) {
@@ -20736,7 +20752,7 @@ function getDocument(src = {}) {
   const withCredentials = src.withCredentials === true;
   const password = src.password ?? null;
   const rangeTransport = src.range instanceof PDFDataRangeTransport ? src.range : null;
-  const rangeChunkSize = Number.isInteger(src.rangeChunkSize) && src.rangeChunkSize > 0 ? src.rangeChunkSize : 2 ** 16;
+   const rangeChunkSize = Number.isInteger(src.rangeChunkSize) && src.rangeChunkSize > 0 ? src.rangeChunkSize : DEFAULT_RANGE_CHUNK_SIZE;
   let worker = src.worker instanceof PDFWorker ? src.worker : null;
   const verbosity = src.verbosity;
   const docBaseUrl = typeof src.docBaseUrl === "string" && !isDataScheme(src.docBaseUrl) ? src.docBaseUrl : null;

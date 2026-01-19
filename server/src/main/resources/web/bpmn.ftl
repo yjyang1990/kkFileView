@@ -41,9 +41,10 @@
     const viewer = new BpmnJS({
         container: '#diagram'
     });
-      var url = '${finalUrl}';
+	var url = '${finalUrl}';
+	var kkagent = '${kkagent}';
     var baseUrl = '${baseUrl}'.endsWith('/') ? '${baseUrl}' : '${baseUrl}' + '/';
-    if (!url.startsWith(baseUrl)) {
+    if (kkagent === 'true' || !url.startsWith(baseUrl)) {
         url = baseUrl + 'getCorsFile?urlPath=' + encodeURIComponent(Base64.encode(url));
     }
     async function showDiagram(diagramXML) {

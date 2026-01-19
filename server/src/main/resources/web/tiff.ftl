@@ -4,7 +4,7 @@
     <meta charset="utf-8"/>
     <title>Tiff 图片预览</title>
     <#include "*/commonHeader.ftl">
-    <link rel="stylesheet" href="css/viewer.min.css">
+	   <link rel="stylesheet" href="css/officePicture.css"/>
     <script src="js/UTIF.js"></script>
     <script src="js/base64.min.js" type="text/javascript"></script>
     <#if currentUrl?contains("http://") || currentUrl?contains("https://") || currentUrl?contains("file://")|| currentUrl?contains("ftp://")>
@@ -13,13 +13,6 @@
         <#assign finalUrl="${baseUrl}${currentUrl}">
     </#if>
 </head>
-<style type="text/css">
-    body{ text-align:center}
-    img{max-width: 100%;
-        margin:0 auto;
-        border: 2px solid #ddd;
-    }
-</style>
 <body>
 <#if "false" == pdfDownloadDisable>
     <!--endprint-->
@@ -38,8 +31,9 @@
         return reg.test(this);
     }
     var url = '${finalUrl}';
-    var baseUrl = '${baseUrl}'.endsWithh('/') ? '${baseUrl}' : '${baseUrl}' + '/';
-    if (!url.startsWithh(baseUrl)) {
+	var kkagent = '${kkagent}';
+    var baseUrl = '${baseUrl}'.endsWith('/') ? '${baseUrl}' : '${baseUrl}' + '/';
+    if (kkagent === 'true' || !url.startsWith(baseUrl)) {
         url = baseUrl + 'getCorsFile?urlPath=' + encodeURIComponent(Base64.encode(url));
     }
     var myp = document.getElementById('tiff');
@@ -59,11 +53,17 @@
 } catch(e){
   if (e.message.indexOf("CanvasRenderingContext2D")) 
 { 
-       var imgObjj = new Image();
-             imgObjj.src = url;
-             myp.appendChild(imgObjj);
-             console.log("错误:" + e);
-    return;
+var html = "";
+html += "<div class=\"img-area\">";
+html += "<div class=\"image-container\">";
+html += '<img class="my-photo" id="page1" src="'+url+'">';
+html += "<div class=\"button-container\">";
+html += "<button onclick=\"rotateImg('page1', false)\">旋转</button>";
+html += "</div>";
+html += "</div>";
+html += "</div>";
+myp.innerHTML  = html;
+return;
  }
     console.log("错误:" + e);
 var html = "";
@@ -109,24 +109,42 @@ html += "    <p>有任何疑问，请加入kk开源社区知识星球咨询：<a
 html += "</div>";
 html += "</body>";
 html += "</html>";
-   document.write(html);
-	document.close();
-    return;
+document.write(html);
+document.close();
+return;
 }
         for (let i = 0; i < rgba.length; i++) {
             imageData.data[i] = rgba[i];
         }
         ctx.putImageData(imageData, 0, 0);
         const imgObj = document.createElement('img');
+       // imgObj.id = 'page${img_index+1}';
+       // imgObj.className = "my-photo";
         imgObj.src = canvas.toDataURL('image/png');
         if (++p < pages.length) {
             imgObj.onload = loadOne;
         }
-        myp.appendChild(imgObj);
+         console.log(p);
+        
+var html = "";
+html += "<div class=\"img-area\">";
+html += "<div class=\"image-container\">";
+html += '<img class="my-photo" id="page'+p+'" src="'+canvas.toDataURL('image/png')+'">';
+html += " <div class=\"button-container\">";
+html += "<button class=\"nszImg\">"+p+"/"+pages.length+"页</button>";
+html += "<button class=\"nszImg\" onclick=\"rotateImg('page"+p+"', false)\">逆时针</button>";
+html += "<button class=\"sszImg\" onclick=\"rotateImg('page"+p+"', true)\">顺时针</button>";
+html += "<button class=\"sszImg\" onclick=\"recoveryImg('page"+p+"', true)\">恢复</button>";
+html += "</div>";
+html += "</div>";
+html += "</div>";
+const child = document.createElement('div');
+child.innerHTML  = html;
+myp.appendChild(child);
     }
 
     function imgLoaded(e) {
-        resp = e.target.response;
+        resp = e;
         pages = UTIF.decode(resp);
         p = 0;
         loadOne();
@@ -134,8 +152,62 @@ html += "</html>";
     const xhr = new XMLHttpRequest();
     xhr.open('GET', url);
     xhr.responseType = 'arraybuffer';
-    xhr.onload = imgLoaded;
+    xhr.onload = function() {
+  if (xhr.status === 200) {
+    imgLoaded(xhr.response);
+  } else {
+    console.log(`Error ${xhr.status}: ${xhr.statusText}`)
+        }
+};
     xhr.send();
+       function rotateImg(imgId, isRotate) {
+        var img = document.querySelector("#" + imgId);
+
+        if (img.classList.contains("imgT90")) {
+            img.classList.remove("imgT90");
+            if (isRotate) {
+                img.classList.add("imgT180");
+            }
+        } else if (img.classList.contains("imgT-90")) {
+            img.classList.remove("imgT-90");
+            if (!isRotate) {
+                img.classList.add("imgT-180");
+            }
+        } else if (img.classList.contains("imgT180")) {
+            img.classList.remove("imgT180");
+            if (isRotate) {
+                img.classList.add("imgT270");
+            } else {
+                img.classList.add("imgT90");
+            }
+        } else if (img.classList.contains("imgT-180")) {
+            img.classList.remove("imgT-180");
+            if (isRotate) {
+                img.classList.add("imgT-90");
+            } else {
+                img.classList.add("imgT-270");
+            }
+        } else if (img.classList.contains("imgT270")) {
+            img.classList.remove("imgT270");
+            if (!isRotate) {
+                img.classList.add("imgT180");
+            }
+        } else if (img.classList.contains("imgT-270")) {
+            img.classList.remove("imgT-270");
+            if (isRotate) {
+                img.classList.add("imgT-180");
+            }
+        } else {
+            if (isRotate) {
+                img.classList.add("imgT90");
+            } else {
+                img.classList.add("imgT-90");
+            }
+        }
+    }
+    function recoveryImg(imgId) {
+        document.querySelector("#" + imgId).classList.remove("imgT90", "imgT180", "imgT270", "imgT-90", "imgT-180", "imgT-270")
+    }
 
     /*初始化水印*/
     window.onload = function () {

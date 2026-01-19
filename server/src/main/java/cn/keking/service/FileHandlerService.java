@@ -254,10 +254,16 @@ public class FileHandlerService {
             try {
                 originFileName = URLDecoder.decode(originFileName, uriEncoding);  //转义的文件名 解下出原始文件名
             } catch (UnsupportedEncodingException e) {
-                logger.error("Failed to decode file name: {}", originFileName, e);
+                e.printStackTrace();
             }
         }else {
-            url = WebUtils.encodeUrlFileName(url); //对未转义的url进行转义
+            url = Objects.requireNonNull(WebUtils.encodeUrlFileName(url))
+                    .replaceAll("\\+", "%20")
+                    .replaceAll("%3A", ":")
+                    .replaceAll("%2F", "/")
+                    .replaceAll("%3F", "?")
+                    .replaceAll("%26", "&")
+                    .replaceAll("%3D", "=");
         }
         originFileName = KkFileUtils.htmlEscape(originFileName);  //文件名处理
         boolean isHtmlView = suffix.equalsIgnoreCase("xls") || suffix.equalsIgnoreCase("xlsx") || suffix.equalsIgnoreCase("csv") || suffix.equalsIgnoreCase("xlsm") || suffix.equalsIgnoreCase("xlt") || suffix.equalsIgnoreCase("xltm") || suffix.equalsIgnoreCase("et") || suffix.equalsIgnoreCase("ett") || suffix.equalsIgnoreCase("xlam");

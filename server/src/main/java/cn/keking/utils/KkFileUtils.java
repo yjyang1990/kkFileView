@@ -10,6 +10,7 @@ import org.springframework.web.util.HtmlUtils;
 import java.io.File;
 import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class KkFileUtils {
@@ -236,5 +237,15 @@ public class KkFileUtils {
         File file = new File(filePath);
         return file.exists();
     }
-
+    /**
+     * 判断是否是数字
+     */
+    public static boolean isNumeric(String str){
+        Pattern pattern = Pattern.compile("[0-9]*");
+        if (ObjectUtils.isEmpty(str)){
+            return false;
+        }
+        Matcher isNum = pattern.matcher(str);
+        return isNum.matches();
+    }
 }

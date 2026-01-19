@@ -229,11 +229,7 @@ public class WebUtils {
         if (fileNameEndIndex < fileNameStartIndex) {
             return url;
         }
-        try {
-            encodedFileName = URLEncoder.encode(noQueryUrl.substring(fileNameStartIndex, fileNameEndIndex), "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            return null;
-        }
+        encodedFileName = URLEncoder.encode(noQueryUrl.substring(fileNameStartIndex, fileNameEndIndex), StandardCharsets.UTF_8);
         return url.substring(0, fileNameStartIndex) + encodedFileName + url.substring(fileNameEndIndex);
     }
 
@@ -471,6 +467,8 @@ public class WebUtils {
      */
     public static void applyBasicAuthHeaders(HttpHeaders headers, FileAttribute fileAttribute) {
         String url = fileAttribute.getUrl();
+        System.out.println(" T555.");
+        System.out.println(url);
         // 从配置文件读取User-Agent，如果没有配置则使用默认值
         String customUserAgent=ConfigConstants.getUserAgent();
         String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";

@@ -1,6 +1,7 @@
 package cn.keking.web.controller;
 
 import cn.keking.config.ConfigConstants;
+import cn.keking.model.FileType;
 import cn.keking.model.ReturnResponse;
 import cn.keking.utils.CaptchaUtil;
 import cn.keking.utils.DateUtils;
@@ -27,13 +28,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.*;
 
 import static cn.keking.utils.CaptchaUtil.CAPTCHA_CODE;
 import static cn.keking.utils.CaptchaUtil.CAPTCHA_GENERATE_TIME;
@@ -54,23 +52,72 @@ public class FileController {
     public static final String BASE64_DECODE_ERROR_MSG = "Base64解码失败，请检查你的 %s 是否采用 Base64 + urlEncode 双重编码了！";
 
     @PostMapping("/fileUpload")
-    public ReturnResponse<Object> fileUpload(@RequestParam("file") MultipartFile file) {
-        ReturnResponse<Object> checkResult = this.fileUploadCheck(file);
+    public ReturnResponse<Object> fileUpload(@RequestParam("file") MultipartFile file,
+                                             @RequestParam(value = "path", defaultValue = "") String path) {
+        ReturnResponse<Object> checkResult = this.fileUploadCheck(file, path);
         if (checkResult.isFailure()) {
             return checkResult;
         }
-        File outFile = new File(fileDir + demoPath);
-        if (!outFile.exists() && !outFile.mkdirs()) {
-            logger.error("创建文件夹【{}】失败，请检查目录权限！", fileDir + demoPath);
+
+        String uploadPath = fileDir + demoPath;
+        if (!ObjectUtils.isEmpty(path)) {
+            uploadPath += path + File.separator;
         }
+
+        File outFile = new File(uploadPath);
+        if (!outFile.exists() && !outFile.mkdirs()) {
+            logger.error("创建文件夹【{}】失败，请检查目录权限！", uploadPath);
+            return ReturnResponse.failure("创建文件夹失败，请检查目录权限！");
+        }
+
         String fileName = checkResult.getContent().toString();
-        logger.info("上传文件：{}{}{}", fileDir, demoPath, fileName);
-        try (InputStream in = file.getInputStream(); OutputStream out = Files.newOutputStream(Paths.get(fileDir + demoPath + fileName))) {
+        logger.info("上传文件：{}{}", uploadPath, fileName);
+
+        try (InputStream in = file.getInputStream();
+             OutputStream out = Files.newOutputStream(Paths.get(uploadPath + fileName))) {
             StreamUtils.copy(in, out);
             return ReturnResponse.success(null);
         } catch (IOException e) {
             logger.error("文件上传失败", e);
-            return ReturnResponse.failure();
+            return ReturnResponse.failure("文件上传失败");
+        }
+    }
+
+    @PostMapping("/createFolder")
+    public ReturnResponse<Object> createFolder(@RequestParam(value = "path", defaultValue = "") String path,
+                                               @RequestParam("folderName") String folderName) {
+        if (ConfigConstants.getFileUploadDisable()) {
+            return ReturnResponse.failure("文件上传接口已禁用");
+        }
+        try {
+            // 验证文件夹名称
+            if (ObjectUtils.isEmpty(folderName)) {
+                return ReturnResponse.failure("文件夹名称不能为空");
+            }
+
+            if (KkFileUtils.isIllegalFileName(folderName)) {
+                return ReturnResponse.failure("非法文件夹名称");
+            }
+            String basePath = fileDir + demoPath;
+            if (!ObjectUtils.isEmpty(path)) {
+                basePath += path + File.separator;
+            }
+
+            File newFolder = new File(basePath + folderName);
+            if (newFolder.exists()) {
+                return ReturnResponse.failure("文件夹已存在");
+            }
+
+            if (newFolder.mkdirs()) {
+                logger.info("创建文件夹：{}", newFolder.getAbsolutePath());
+                return ReturnResponse.success();
+            } else {
+                logger.error("创建文件夹失败：{}", newFolder.getAbsolutePath());
+                return ReturnResponse.failure("创建文件夹失败，请检查目录权限");
+            }
+        } catch (Exception e) {
+            logger.error("创建文件夹异常", e);
+            return ReturnResponse.failure("创建文件夹失败：" + e.getMessage());
         }
     }
 
@@ -81,15 +128,55 @@ public class FileController {
             return checkResult;
         }
         fileName = checkResult.getContent().toString();
-        File file = new File(fileDir + demoPath + fileName);
-        logger.info("删除文件：{}", file.getAbsolutePath());
-        if (file.exists() && !file.delete()) {
-            String msg = String.format("删除文件【%s】失败，请检查目录权限！", file.getPath());
-            logger.error(msg);
-            return ReturnResponse.failure(msg);
+
+        // 构建完整路径
+        String fullPath = fileDir + demoPath + fileName;
+        File file = new File(fullPath);
+
+        logger.info("删除文件/文件夹：{}", file.getAbsolutePath());
+        if (file.exists()) {
+            if (file.isDirectory()) {
+                // 删除文件夹及其内容
+                if (deleteDirectory(file)) {
+                    WebUtils.removeSessionAttr(request, CAPTCHA_CODE);
+                    return ReturnResponse.success();
+                } else {
+                    String msg = String.format("删除文件夹【%s】失败，请检查目录权限！", file.getPath());
+                    logger.error(msg);
+                    return ReturnResponse.failure(msg);
+                }
+            } else {
+                // 删除文件
+                if (file.delete()) {
+                    WebUtils.removeSessionAttr(request, CAPTCHA_CODE);
+                    return ReturnResponse.success();
+                } else {
+                    String msg = String.format("删除文件【%s】失败，请检查目录权限！", file.getPath());
+                    logger.error(msg);
+                    return ReturnResponse.failure(msg);
+                }
+            }
+        } else {
+            return ReturnResponse.failure("文件或文件夹不存在");
         }
-        WebUtils.removeSessionAttr(request, CAPTCHA_CODE); //删除缓存验证码
-        return ReturnResponse.success();
+    }
+
+    /**
+     * 递归删除目录
+     */
+    private boolean deleteDirectory(File dir) {
+        if (dir.isDirectory()) {
+            File[] children = dir.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    boolean success = deleteDirectory(child);
+                    if (!success) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return dir.delete();
     }
 
     /**
@@ -124,32 +211,156 @@ public class FileController {
         outputStream.close();
     }
 
-    @GetMapping("/listFiles")
-    public List<Map<String, String>> getFiles() {
-        List<Map<String, String>> list = new ArrayList<>();
-        File file = new File(fileDir + demoPath);
-        if (file.exists()) {
-            File[] files = Objects.requireNonNull(file.listFiles());
-            Arrays.sort(files, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
-            Arrays.stream(files).forEach(file1 -> {
-                Map<String, String> fileName = new HashMap<>();
-                fileName.put("fileName", demoDir + "/" + file1.getName());
-                list.add(fileName);
-            });
+    @PostMapping("/listFiles")
+    public Map<String, Object> getFiles(@RequestParam(value = "path", defaultValue = "") String path,
+                                        @RequestParam(value = "searchText", defaultValue = "") String searchText,
+                                        @RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "20") int size,
+                                        @RequestParam(required = false) String sort,
+                                        @RequestParam(required = false) String order) {
+        Map<String, Object> result = new HashMap<>();
+        List<Map<String, Object>> fileList = new ArrayList<>();
+
+        try {
+            // 构建完整路径
+            String basePath = fileDir + demoPath;
+            if (!ObjectUtils.isEmpty(path)) {
+                basePath += path + File.separator;
+            }
+
+            File currentDir = new File(basePath);
+            if (currentDir.exists() && currentDir.isDirectory()) {
+                File[] files = currentDir.listFiles();
+                if (files != null) {
+                    // 转换为List
+                    List<File> fileObjects = new ArrayList<>(Arrays.asList(files));
+
+                    // 如果搜索文本不为空，进行过滤
+                    if (!ObjectUtils.isEmpty(searchText)) {
+                        String searchLower = searchText.toLowerCase();
+                        fileObjects.removeIf(f -> !f.getName().toLowerCase().contains(searchLower));
+                    }
+
+                    // 排序
+                    Comparator<File> comparator = getFileComparator(sort, order);
+                    if (comparator != null) {
+                        fileObjects.sort(comparator);
+                    }
+
+                    int total = fileObjects.size();
+                    int start = page * size;
+                    int end = Math.min(start + size, total);
+
+                    if (start < total) {
+                        for (int i = start; i < end; i++) {
+                            File f = fileObjects.get(i);
+                            Map<String, Object> fileInfo = new HashMap<>();
+
+                            fileInfo.put("name", f.getName());
+                            fileInfo.put("isDirectory", f.isDirectory());
+                            fileInfo.put("lastModified", f.lastModified());
+                            fileInfo.put("size", f.length());
+
+                            // 构建路径信息
+                            String relativePath = demoDir + "/" + (ObjectUtils.isEmpty(path) ? "" : path + "/") + f.getName();
+                            fileInfo.put("relativePath", relativePath);
+
+                            // 如果是目录，保存完整的相对路径用于导航
+                            if (f.isDirectory()) {
+                                String fullPath = ObjectUtils.isEmpty(path) ? f.getName() : path + "/" + f.getName();
+                                fileInfo.put("fullPath", fullPath);
+                            }
+
+                            // 获取文件属性
+                            try {
+                                Path filePath = f.toPath();
+                                BasicFileAttributes attrs = Files.readAttributes(filePath, BasicFileAttributes.class);
+                                fileInfo.put("creationTime", attrs.creationTime().toMillis());
+                            } catch (IOException e) {
+                                logger.warn("获取文件属性失败: {}", f.getName(), e);
+                            }
+
+                            fileList.add(fileInfo);
+                        }
+                    }
+
+                    result.put("total", total);
+                    result.put("data", fileList);
+                }
+            } else {
+                result.put("total", 0);
+                result.put("data", Collections.emptyList());
+            }
+        } catch (Exception e) {
+            logger.error("获取文件列表失败", e);
+            result.put("total", 0);
+            result.put("data", Collections.emptyList());
         }
-        return list;
+
+        return result;
+    }
+
+    /**
+     * 获取文件比较器
+     */
+    private Comparator<File> getFileComparator(String sort, String order) {
+        if (ObjectUtils.isEmpty(sort)) {
+            // 默认按文件夹优先，然后按名称排序
+            return (f1, f2) -> {
+                if (f1.isDirectory() && !f2.isDirectory()) {
+                    return -1;
+                } else if (!f1.isDirectory() && f2.isDirectory()) {
+                    return 1;
+                } else {
+                    return f1.getName().compareToIgnoreCase(f2.getName());
+                }
+            };
+        }
+
+        boolean isDesc = "desc".equalsIgnoreCase(order);
+
+        return switch (sort) {
+            case "name" -> (f1, f2) -> {
+                int compare = f1.getName().compareToIgnoreCase(f2.getName());
+                return isDesc ? -compare : compare;
+            };
+            case "lastModified" -> (f1, f2) -> {
+                long compare = Long.compare(f1.lastModified(), f2.lastModified());
+                return isDesc ? (int) -compare : (int) compare;
+            };
+            case "size" -> (f1, f2) -> {
+                if (f1.isDirectory() && f2.isDirectory()) {
+                    return 0;
+                } else if (f1.isDirectory()) {
+                    return isDesc ? 1 : -1;
+                } else if (f2.isDirectory()) {
+                    return isDesc ? -1 : 1;
+                } else {
+                    long compare = Long.compare(f1.length(), f2.length());
+                    return isDesc ? (int) -compare : (int) compare;
+                }
+            };
+            case "isDirectory" -> (f1, f2) -> {
+                if (f1.isDirectory() && !f2.isDirectory()) {
+                    return isDesc ? 1 : -1;
+                } else if (!f1.isDirectory() && f2.isDirectory()) {
+                    return isDesc ? -1 : 1;
+                } else {
+                    return f1.getName().compareToIgnoreCase(f2.getName());
+                }
+            };
+            default -> null;
+        };
     }
 
     /**
      * 上传文件前校验
-     *
-     * @param file 文件
-     * @return 校验结果
      */
-    private ReturnResponse<Object> fileUploadCheck(MultipartFile file) {
+    private ReturnResponse<Object> fileUploadCheck(MultipartFile file, String path) {
         if (ConfigConstants.getFileUploadDisable()) {
-            return ReturnResponse.failure("文件传接口已禁用");
+            return ReturnResponse.failure("文件上传接口已禁用");
         }
+
         String fileName = WebUtils.getFileNameFromMultipartFile(file);
         if (fileName.lastIndexOf(".") == -1) {
             return ReturnResponse.failure("不允许上传的类型");
@@ -160,47 +371,56 @@ public class FileController {
         if (KkFileUtils.isIllegalFileName(fileName)) {
             return ReturnResponse.failure("不允许上传的文件名: " + fileName);
         }
+        FileType type = FileType.typeFromFileName(fileName);
+        if (Objects.equals(type, FileType.OTHER)) {
+            return ReturnResponse.failure("该文件格式还不支持预览，请联系管理员，添加该格式: " + fileName);
+        }
+
         // 判断是否存在同名文件
-        if (existsFile(fileName)) {
+        if (existsFile(fileName, path)) {
             return ReturnResponse.failure("存在同名文件，请先删除原有文件再次上传");
         }
+
         return ReturnResponse.success(fileName);
     }
 
-
     /**
      * 删除文件前校验
-     *
-     * @param fileName 文件名
-     * @return 校验结果
      */
     private ReturnResponse<Object> deleteFileCheck(HttpServletRequest request, String fileName, String password) {
         if (ObjectUtils.isEmpty(fileName)) {
             return ReturnResponse.failure("文件名为空，删除失败！");
         }
         try {
-            fileName = WebUtils.decodeUrl(fileName,"base64");
+            fileName = WebUtils.decodeUrl(fileName, "base64");
         } catch (Exception ex) {
             String errorMsg = String.format(BASE64_DECODE_ERROR_MSG, fileName);
             return ReturnResponse.failure(errorMsg + "删除失败！");
         }
-        assert fileName != null;
+
+        if (ObjectUtils.isEmpty(fileName)) {
+            return ReturnResponse.failure("文件名为空，删除失败！");
+        }
         if (fileName.contains("/")) {
             fileName = fileName.substring(fileName.lastIndexOf("/") + 1);
         }
         if (KkFileUtils.isIllegalFileName(fileName)) {
             return ReturnResponse.failure("非法文件名，删除失败！");
         }
+
         if (ObjectUtils.isEmpty(password)) {
             return ReturnResponse.failure("密码 or 验证码为空，删除失败！");
         }
 
-        String expectedPassword = ConfigConstants.getDeleteCaptcha() ? WebUtils.getSessionAttr(request, CAPTCHA_CODE) : ConfigConstants.getPassword();
+        String expectedPassword = ConfigConstants.getDeleteCaptcha() ?
+                WebUtils.getSessionAttr(request, CAPTCHA_CODE) :
+                ConfigConstants.getPassword();
 
         if (!password.equalsIgnoreCase(expectedPassword)) {
             logger.error("删除文件【{}】失败，密码错误！", fileName);
             return ReturnResponse.failure("删除文件失败，密码错误！");
         }
+
         return ReturnResponse.success(fileName);
     }
 
@@ -220,8 +440,12 @@ public class FileController {
         return RarUtils.getTree(fileUrl);
     }
 
-    private boolean existsFile(String fileName) {
-        File file = new File(fileDir + demoPath + fileName);
+    private boolean existsFile(String fileName, String path) {
+        String fullPath = fileDir + demoPath;
+        if (!ObjectUtils.isEmpty(path)) {
+            fullPath += path + File.separator;
+        }
+        File file = new File(fullPath + fileName);
         return file.exists();
     }
 }

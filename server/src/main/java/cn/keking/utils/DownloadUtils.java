@@ -55,7 +55,7 @@ public class DownloadUtils {
 
         String urlStr = null;
         try {
-            urlStr = fileAttribute.getUrl().replaceAll("\\+", "%20").replaceAll(" ", "%20");
+            urlStr = fileAttribute.getUrl();
         } catch (Exception e) {
             logger.error("处理URL异常:", e);
         }
