@@ -174,7 +174,7 @@ public class OnlinePreviewController {
         }
         FileAttribute fileAttribute = fileHandlerService.getFileAttribute(urlPath, req);
         InputStream inputStream = null;
-        logger.info("读取跨域pdf文件url：{}", urlPath);
+        logger.info("读取跨域文件url：{}", urlPath);
         if (!isFtpUrl(url)) {
             CloseableHttpClient httpClient = HttpRequestUtils.createConfiguredHttpClient();
 

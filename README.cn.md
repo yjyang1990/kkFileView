@@ -1,6 +1,6 @@
 # kkFileView
 文档在线预览项目解决方案，项目使用流行的spring boot搭建，易上手和部署。万能的文件预览开源项目，基本支持主流文档格式预览，如：
-1. 支持 doc, docx, xls, xlsx, xlsm, ppt, pptx, csv, tsv, dotm, xlt, xltm, dot, dotx,xlam, xla ,pages 等 Office 办公文档
+1. 支持 doc, docx, xls, xlsx, xlsm, ppt, pptx, csv, tsv, dotm, xlt, xltm, dot, dotx,xlam, xla ,pages ,pptm 等 Office 办公文档
 2. 支持 wps, dps, et, ett, wpt 等国产 WPS Office 办公文档
 3. 支持 odt, ods, ots, odp, otp, six, ott, fodt, fods 等OpenOffice、LibreOffice 办公文档
 4. 支持 vsd, vsdx 等 Visio 流程图文件
@@ -15,7 +15,7 @@
 13. 支持 dwg, dxf, dwf, iges , igs, dwt, dng, ifc, dwfx, stl, cf2, plt 等 CAD 模型文件
 14. 支持 txt, xml(渲染), xbrl(渲染), md(渲染), java, php, py, js, css 等所有纯文本
 15. 支持 zip, rar, jar, tar, gzip, 7z 等压缩包
-16. 支持 jpg, jpeg, png, gif, bmp, ico, jfif, webp ,heic等图片预览（翻转，缩放，镜像）
+16. 支持 jpg, jpeg, png, gif, bmp, ico, jfif, webp ,heic ,heif等图片预览（翻转，缩放，镜像）
 17. 支持 tif, tiff 图信息模型文件
 18. 支持 tga 图像格式文件
 19. 支持 svg 矢量图像格式文件

@@ -51,19 +51,21 @@
      try{
     imageData = ctx.createImageData(canvas.width, canvas.height);
 } catch(e){
-  if (e.message.indexOf("CanvasRenderingContext2D")) 
+// 修改异常处理部分，让旋转按钮与正常解析部分保持一致
+if (e.message.indexOf("CanvasRenderingContext2D")) 
 { 
-var html = "";
-html += "<div class=\"img-area\">";
-html += "<div class=\"image-container\">";
-html += '<img class="my-photo" id="page1" src="'+url+'">';
-html += "<div class=\"button-container\">";
-html += "<button onclick=\"rotateImg('page1', false)\">旋转</button>";
-html += "</div>";
-html += "</div>";
-html += "</div>";
-myp.innerHTML  = html;
-return;
+    var html = "";
+    html += "<div class=\"img-area\">";
+    html += "<div class=\"image-container\" style=\"position:relative;\">";
+    html += '<img class="my-photo" id="page1" src="'+url+'">';
+    html += "<div class=\"button-container\" style=\"position:absolute; bottom:5px; right:5px; opacity:0.1; transition:opacity 0.2s;\" onmouseover=\"this.style.opacity='0.9'\" onmouseout=\"this.style.opacity='0.1'\">";
+    html += "<button class=\"nszImg\" style=\"margin-right:3px; font-size:11px; padding:2px 6px; background:rgba(255,255,255,0.9); border:1px solid #999; border-radius:2px; min-width:50px;\">1/1页</button>";
+    html += "<button class=\"sszImg\" onclick=\"rotateImg('page1', true)\" style=\"font-size:11px; padding:2px 6px; background:rgba(255,255,255,0.9); border:1px solid #999; border-radius:2px;\">↻</button>";
+    html += "</div>";
+    html += "</div>";
+    html += "</div>";
+    myp.innerHTML  = html;
+    return;
  }
     console.log("错误:" + e);
 var html = "";

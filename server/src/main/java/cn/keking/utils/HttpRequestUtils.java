@@ -27,6 +27,7 @@ import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.SSLContext;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Map;
@@ -53,6 +54,43 @@ public class HttpRequestUtils {
     // 默认连接池配置
     private static final int DEFAULT_MAX_TOTAL = 200;           // 最大连接数
     private static final int DEFAULT_MAX_PER_ROUTE = 50;        // 每个路由最大连接数
+
+    /**
+     * 判断是否为客户端中断连接的异常
+     */
+    public static boolean isClientAbortException(Throwable e) {
+        if (e == null) {
+            return false;
+        }
+
+        // 检查异常链
+        Throwable cause = e;
+        while (cause != null) {
+            // 检查异常消息
+            if (cause instanceof IOException) {
+                String message = cause.getMessage();
+                if (message != null && (
+                        message.contains("你的主机中的软件中止了一个已建立的连接") ||
+                                message.contains("Broken pipe") ||
+                                message.contains("Connection reset by peer") ||
+                                message.contains("ClientAbortException"))) {
+                    return true;
+                }
+            }
+
+            // 检查异常类型
+            String className = cause.getClass().getName();
+            if (className.contains("ClientAbortException") ||
+                    className.contains("AbortedException") ||
+                    className.contains("AsyncRequestNotUsableException")) {
+                return true;
+            }
+
+            cause = cause.getCause();
+        }
+
+        return false;
+    }
 
     /**
      * 初始化连接池管理器（懒加载）
@@ -238,12 +276,31 @@ public class HttpRequestUtils {
                 try {
                     handler.handleResponse(wrapper);
                 } catch (Exception e) {
-                    logger.error("处理文件响应时出错", e);
-                    throw new RuntimeException(e);
+                    // 如果是客户端中断连接，不再记录为错误
+                    if (isClientAbortException(e)) {
+                        if (logger.isDebugEnabled()) {
+                            logger.debug("客户端中断连接，可能用户取消了下载，URL: {}", url);
+                        }
+                    } else {
+                        logger.error("处理文件响应时出错", e);
+                    }
+                    try {
+                        throw e;
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
                 }
                 return null;
             });
         } catch (Exception e) {
+            // 如果是客户端中断连接，不再记录为错误
+            if (isClientAbortException(e)) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("客户端中断连接，URL: {}", url);
+                }
+                throw e; // 重新抛出，让调用者处理
+            }
+
             // 如果是SSL证书错误，给出建议
             if (e.getMessage() != null &&
                     (e.getMessage().contains("SSL") ||

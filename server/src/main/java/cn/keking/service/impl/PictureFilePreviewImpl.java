@@ -45,7 +45,7 @@ public class PictureFilePreviewImpl extends CommonPreviewImpl {
             }
 
         }
-        if(suffix.equalsIgnoreCase("heic")){
+        if(suffix.equalsIgnoreCase("heic")||suffix.equalsIgnoreCase("heif")){
             return HEIC_FILE_PREVIEW_PAGE;
         }else {
             return PICTURE_FILE_PREVIEW_PAGE;

@@ -3,7 +3,7 @@
 <head>
     <title>CADViewer - 中文界面</title>
     <meta charset="utf-8">
-    
+       <#include "*/commonHeader.ftl">
     <!-- 核心样式 - 精简版本 -->
     <link href="cadviewer/app/css/cadviewer-core-styles.css" media="screen" rel="stylesheet" type="text/css" />
     <link href="cadviewer/app/css/font-awesome.min.css" media="screen" rel="stylesheet" type="text/css" />
