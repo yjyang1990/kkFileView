@@ -3,7 +3,7 @@ playwright-report/
 test-results/
 
 __pycache__/
-fixtures/zip-tmp/
+fixtures/archive-tmp/
 fixtures/sample.docx
 fixtures/sample.xlsx
 fixtures/sample.pptx

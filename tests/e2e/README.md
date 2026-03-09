@@ -6,7 +6,7 @@ This folder contains a first MVP of end-to-end automated tests.
 
 - Basic preview smoke checks for common file types (txt/md/json/xml/csv/html/png)
 - Office Phase-2 smoke checks (docx/xlsx/pptx)
-- Archive smoke check (zip)
+- Archive smoke checks (zip/tar/tgz/7z/rar)
 - Basic endpoint reachability
 - Security regression checks for blocked internal-network hosts (`10.*`) on:
   - `/onlinePreview`
@@ -31,7 +31,7 @@ npx playwright install --with-deps chromium
 pip3 install -r requirements.txt
 ```
 
-> Prerequisite: ensure `zip` command is available in PATH (used for `sample.zip` fixture generation).
+> Prerequisite: ensure `python3`, `zip`, and `7z` (or `bsdtar` as a fallback) are available in PATH for archive fixtures.
 
 3. Generate fixtures and start fixture server:
 

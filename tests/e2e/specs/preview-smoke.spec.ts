@@ -25,6 +25,10 @@ test.beforeAll(async () => {
     'sample.xlsx',
     'sample.pptx',
     'sample.zip',
+    'sample.tar',
+    'sample.tgz',
+    'sample.7z',
+    'sample.rar',
   ];
 
   try {
@@ -97,13 +101,33 @@ test('12 zip preview', async ({ request }) => {
   expect(resp.status()).toBe(200);
 });
 
-test('13 security: block 10.x host in onlinePreview', async ({ request }) => {
+test('13 tar preview', async ({ request }) => {
+  const resp = await openPreview(request, `${fixtureBase}/sample.tar`);
+  expect(resp.status()).toBe(200);
+});
+
+test('14 tgz preview', async ({ request }) => {
+  const resp = await openPreview(request, `${fixtureBase}/sample.tgz`);
+  expect(resp.status()).toBe(200);
+});
+
+test('15 7z preview', async ({ request }) => {
+  const resp = await openPreview(request, `${fixtureBase}/sample.7z`);
+  expect(resp.status()).toBe(200);
+});
+
+test('16 rar preview', async ({ request }) => {
+  const resp = await openPreview(request, `${fixtureBase}/sample.rar`);
+  expect(resp.status()).toBe(200);
+});
+
+test('17 security: block 10.x host in onlinePreview', async ({ request }) => {
   const resp = await openPreview(request, `http://10.1.2.3/a.pdf`);
   const body = await resp.text();
   expect(body).toContain('不受信任');
 });
 
-test('14 security: block 10.x host in getCorsFile', async ({ request }) => {
+test('18 security: block 10.x host in getCorsFile', async ({ request }) => {
   const encoded = b64('http://10.1.2.3/a.pdf');
   const resp = await request.get(`/getCorsFile?urlPath=${encoded}`);
   const body = await resp.text();
