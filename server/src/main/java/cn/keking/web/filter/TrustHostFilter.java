@@ -50,7 +50,7 @@ public class TrustHostFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         String url = WebUtils.getSourceUrl(request);
         String host = WebUtils.getHost(url);
-        if (isNotTrustHost(host)) {
+        if (isNotTrustHost(host) || !WebUtils.isValidUrl(url)) {
             String currentHost = host == null ? "UNKNOWN" : host;
             if (response instanceof HttpServletResponse httpServletResponse) {
                 httpServletResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
@@ -78,7 +78,6 @@ public class TrustHostFilter implements Filter {
                 && matchAnyPattern(host, ConfigConstants.getNotTrustHostSet())) {
             return true;
         }
-
         // 如果配置了白名单，检查是否在白名单中
         if (CollectionUtils.isNotEmpty(ConfigConstants.getTrustHostSet())) {
             // 支持通配符 * 表示允许所有主机

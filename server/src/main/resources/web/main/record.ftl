@@ -33,6 +33,54 @@
     <div class="page-header">
         <h1>版本发布记录</h1>
     </div>
+	   <div class="panel panel-success">
+        <div class="panel-heading">
+            <h3 class="panel-title">2026年01月20日，v5.0版本</h3>
+        </div>
+        <div class="panel-body">
+            <div>
+                <h4>优化</h4>
+                1. 优化 xlsx 前端解析  <br>
+                2. 优化 图片 解析 <br>
+				3. 优化 tif 解析 <br>
+				4. 优化 svg 解析 <br>
+				5. 优化 json 解析 <br>
+				6. 优化 ftp多客户端接入 <br>
+				7. 优化 首页支持目录访问 采用post 服务端分页 <br>
+				8. 优化 marked 解析 <br>
+			   <h4>新增</h4>
+			    1. 新增 msg 邮件 解析 <br>
+                2. 新增 heic、 heif 图片 解析 <br>
+				3. 新增 跨域方法 <br>
+				4. 新增 高亮方法 <br>
+				5. 新增 页码方法 <br>
+				6. 新增 AES加密方法 <br>
+				7. 新增 Basic 鉴权方法 <br>
+				8. 新增 秘钥方法 <br>
+				9. 新增 防重复转换 <br>
+				10. 新增 异步等待 <br>
+				11. 新增 上传限制不支持的文件禁止上传 <br>
+				12. 新增 cadviewer转换方法<br>
+				13. 新增 pptm<br>
+             <h4>修复</h4>
+                1. 压缩包路径问题 <br>
+                2. 安全问题 <br>
+				3. 图片水印不全问题 <br>
+				4. 修复SSL自签证书接入问题  <br>
+				<h4>更新</h4>
+				 1. jdk强制现在21版本以上 <br>
+			     2. pdf 前端解析<br>
+				 3. odf 前端解析<br>
+				 4. 3D 模型前端解析<br>
+				 5. pdf后端异步转换 多线程等等<br>
+				 6. tif后端异步转换 多线程等等<br>
+				 7. 视频后端异步转换 多线程等等<br>
+				 8. CAD后端异步转换 多线程等等<br>
+                <br>
+            </div>
+        </div>
+    </div>
+	
      <div class="panel panel-success">
         <div class="panel-heading">
             <h3 class="panel-title">2025年01月16日，v4.4.0版本</h3>
