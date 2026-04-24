@@ -13874,7 +13874,7 @@ class PDFPrintService {
     };
     return new Promise(renderNextPage);
   }
-  useRenderedPage() {
+useRenderedPage() {
     this.throwIfInactive();
     const img = document.createElement("img");
     this.scratchCanvas.toBlob(blob => {
@@ -13883,28 +13883,29 @@ class PDFPrintService {
     const wrapper = document.createElement("div");
     wrapper.className = "printedPage";
     wrapper.append(img);
-	 var printWatermarkDiv = document.createElement('div');
-    // console.log(pageSize);
+    
+    // 关键：定义 pageSize 和 pageCount
+    const pageSize = this.pagesOverview[0];
+    const pageCount = this.pagesOverview.length;
+    
+    var printWatermarkDiv = document.createElement('div');
     printWatermarkDiv.style.position = 'absolute';
     printWatermarkDiv.style.left = '0px';
     printWatermarkDiv.style.top = '0px';
     printWatermarkDiv.style.width = '1024px';
-    printWatermarkDiv.style.height = pageSize.height*pageCount+ "px";
-    watermarkObj(printWatermarkDiv,watermarkTxt);
+    printWatermarkDiv.style.height = pageSize.height * pageCount + "px";
+    watermarkObj(printWatermarkDiv, watermarkTxt);
     wrapper.appendChild(printWatermarkDiv);
     this.printContainer.append(wrapper);
-    const {
-      promise,
-      resolve,
-      reject
-    } = Promise.withResolvers();
+    
+    const { promise, resolve, reject } = Promise.withResolvers();
     img.onload = resolve;
     img.onerror = reject;
     promise.catch(() => {}).then(() => {
       URL.revokeObjectURL(img.src);
     });
     return promise;
-  }
+}
   performPrint() {
     this.throwIfInactive();
     return new Promise(resolve => {

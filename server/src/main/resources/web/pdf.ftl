@@ -78,13 +78,6 @@
         }
         window.location.href = href;
     }
-
-    // 水印初始化（保持原有逻辑）
-    window.onload = function () {
-        if (typeof initWaterMark === 'function') {
-            initWaterMark();
-        }
-    };
 </script>
 </body>
 </html>
